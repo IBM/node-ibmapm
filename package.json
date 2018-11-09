@@ -1,7 +1,7 @@
 {
     "name": "ibmapm",
     "main": "./index.js",
-    "version": "2.0.25",
+    "version": "2.0.26",
     "readme": "Node.js Data Collector",
     "description": "Node.js data collector for IBM BAM",
     "dependencies": {
