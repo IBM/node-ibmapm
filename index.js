@@ -16,8 +16,16 @@ var path = require('path');
 
 var appmetrics = global.Appmetrics || require('appmetrics');
 
+function isTrue(v) {
+    if (v && ['false', 'False', 'FALSE', ''].indexOf(v) < 0) {
+        return true;
+    } else {
+        return false;
+    }
+};
+
 //    initialize log
-if (process.env.KNJ_LOG_TO_CONSOLE) {
+if (isTrue(process.env.KNJ_LOG_TO_CONSOLE)) {
     log4js.loadAppender('console');
 } else {
     log4js.loadAppender('file');
