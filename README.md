@@ -17,12 +17,8 @@ The Node.js data collector helps you to manage the performance and availability 
 
 This data collector can be configured to connect to the IBM Cloud Application Performance Management (Cloud APM v8) server.
 
-## Downloading the latest ibmapm package
-To get the up-to-date ibmapm package, which is a required dependency that you need for Node.js application monitoring, go to https://rtpgsa.ibm.com/projects/i/itm_db2_agent/nodejs/cloudnative/NPMCD/latest/.
-
-This package is for internal testing.
-
-
+## The latest ibmapm package
+The Node.js data collector is published to npm already. You can find it in [ibmapm](https://www.npmjs.com/package/ibmapm).
 
 ## Configuring Node.js application monitoring using the Cloud APM v8 server
 You can use the Node.js data collector, which is delivered in the Cloud APM v8 product, to monitor your Liberty applications running locally, in IBM Cloud, or in IBM Cloud Private. The data collector is configured to connect to the Cloud APM v8 server.
