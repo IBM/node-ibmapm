@@ -42,7 +42,8 @@ if (loglevel &&
 } else {
     logger.setLevel('INFO');
     // logger.info('KNJ_LOG_LEVEL is not set or not set correctly through environment variables.');
-    logger.info('The program set default log level to INFO.');
+    process.env.KNJ_LOG_LEVEL = 'INFO';
+    // logger.info('The program set default log level to INFO.');
 }
 var commontools = require('./lib/tool/common');
 
@@ -187,14 +188,6 @@ commontools.enableTrace(appmetrics);
 var restClient = require('ibmapm-restclient');
 restClient.checkReadyStatus(startDC);
 
-logger.info('== Data Collector version:', global.DC_VERSION);
-logger.info('== Capabilities:');
-logger.info('   |== Metrics:', 'Enabled');
-logger.info('   |== Diagnostic:', 'Disabled');
-logger.info('   |== Transaction Tracking:', 'Disabled');
-logger.info('== Supported Integrations:', 'IBM Cloud Application Management,',
-    'IBM Cloud Application Performance Management');
-
 
 var DCStarted = false;
 
@@ -209,6 +202,14 @@ function startDC() {
 
     var plugin = require('./lib/plugin.js').monitoringPlugin;
     plugin.init('Cloudnative');
+
+    logger.info('== Data Collector version:', global.DC_VERSION);
+    logger.info('== Capabilities:');
+    logger.info('   |== Metrics:', 'Enabled');
+    logger.info('   |== Diagnostic:', commontools.testTrue(process.env.KNJ_ENABLE_DEEPDIVE) ? 'Enabled' : 'Disabled');
+    logger.info('   |== Transaction Tracking:', commontools.testTrue(process.env.KNJ_ENABLE_TT) ? 'Enabled' : 'Disabled');
+    logger.info('== Supported Integrations:', 'IBM Cloud Application Management,',
+        'IBM Cloud Application Performance Management');
 
 }
 
