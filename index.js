@@ -38,6 +38,7 @@ if (loglevel &&
     (loglevel === 'OFF' || loglevel === 'ERROR' || loglevel === 'INFO' ||
         loglevel === 'DEBUG' || loglevel === 'ALL')) {
     logger.setLevel(loglevel);
+    process.env.KNJ_LOG_LEVEL = loglevel;
     logger.info('KNJ_LOG_LEVEL is set to', loglevel);
 } else {
     logger.setLevel('INFO');
