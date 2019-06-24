@@ -3,6 +3,7 @@
 // Node module: ibmapm
 // This file is licensed under the Apache License 2.0.
 // License text available at https://opensource.org/licenses/Apache-2.0
+// PLACEHOLDER_FOR_BI_FIX
 if (!global.NodeDCLoaded) {
     // The Node.js DC is not required.
     global.NodeDCLoaded = true;
@@ -101,9 +102,14 @@ if (process.env.MONITORING_SECURITY_URL) {
 }
 
 // initialize shared configurations:
+if (typeof (process.env.SECURITY_OFF) === 'undefined' && configObj && configObj.SECURITY_OFF) {
+    process.env.SECURITY_OFF = configObj.SECURITY_OFF;
+}
+
 if (commontools.testTrue(process.env.SECURITY_OFF)) {
     global.SECURITY_OFF = true;
 }
+
 
 if (typeof (process.env.KNJ_ENABLE_TT) === 'undefined' && configObj && configObj.KNJ_ENABLE_TT) {
     process.env.KNJ_ENABLE_TT = configObj.KNJ_ENABLE_TT;
@@ -123,10 +129,22 @@ if (typeof (process.env.KNJ_MIN_CLOCK_STACK) === 'undefined' &&
     process.env.KNJ_MIN_CLOCK_STACK = configObj.KNJ_MIN_CLOCK_STACK;
 }
 
-if (typeof (process.env.KNJ_DISABLE_METHODTRACE) === 'undefined' &&
-    configObj && configObj.KNJ_DISABLE_METHODTRACE) {
-    process.env.KNJ_DISABLE_METHODTRACE = configObj.KNJ_DISABLE_METHODTRACE;
+// if (typeof (process.env.KNJ_DISABLE_METHODTRACE) === 'undefined' &&
+//     configObj && configObj.KNJ_DISABLE_METHODTRACE) {
+//     process.env.KNJ_DISABLE_METHODTRACE = configObj.KNJ_DISABLE_METHODTRACE;
+// }
+
+if (typeof (process.env.KNJ_ENABLE_DEEPDIVE) === 'undefined' &&
+    configObj && configObj.KNJ_ENABLE_DEEPDIVE) {
+    process.env.KNJ_ENABLE_DEEPDIVE = configObj.KNJ_ENABLE_DEEPDIVE;
 }
+
+if (typeof (process.env.KNJ_ENABLE_METHODTRACE) === 'undefined' &&
+    configObj && configObj.KNJ_ENABLE_METHODTRACE) {
+    process.env.KNJ_ENABLE_METHODTRACE = configObj.KNJ_ENABLE_METHODTRACE;
+}
+
+
 if (typeof (process.env.KNJ_AAR_BATCH_FREQ) === 'undefined' &&
     configObj && configObj.KNJ_AAR_BATCH_FREQ) {
     process.env.KNJ_AAR_BATCH_FREQ = configObj.KNJ_AAR_BATCH_FREQ;
@@ -134,6 +152,23 @@ if (typeof (process.env.KNJ_AAR_BATCH_FREQ) === 'undefined' &&
 if (typeof (process.env.KNJ_AAR_BATCH_COUNT) === 'undefined' &&
     configObj && configObj.KNJ_AAR_BATCH_COUNT) {
     process.env.KNJ_AAR_BATCH_COUNT = configObj.KNJ_AAR_BATCH_COUNT;
+}
+
+
+if (!loglevel &&
+    configObj && configObj.KNJ_LOG_LEVEL) {
+    process.env.KNJ_LOG_LEVEL = configObj.KNJ_LOG_LEVEL;
+
+    var knj_loglevel = process.env.KNJ_LOG_LEVEL ? process.env.KNJ_LOG_LEVEL.toUpperCase() : undefined;
+    if (knj_loglevel &&
+        (knj_loglevel === 'OFF' || knj_loglevel === 'ERROR' || knj_loglevel === 'INFO' ||
+        knj_loglevel === 'DEBUG' || knj_loglevel === 'ALL')) {
+        logger.setLevel(knj_loglevel);
+        process.env.KNJ_LOG_LEVEL = knj_loglevel;
+        logger.info('KNJ_LOG_LEVEL is set to', knj_loglevel);
+        loglevel = knj_loglevel;
+        require('ibmapm-restclient').getLogUtil().updateLogLevel(loglevel);
+    }
 }
 // initialize shared configurations end
 
@@ -238,7 +273,6 @@ function getDCVersion() {
 
 function initJaegerSender() {
     logger.debug('initJaegerSender');
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
     if (!opentracing_disabled) {
         const zipkin = require('./appmetrics-zipkin/index.js');
         const zipkinUrl = process.env.JAEGER_ENDPOINT_ZIPKIN ?

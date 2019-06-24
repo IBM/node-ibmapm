@@ -1,11 +1,11 @@
 {
     "name": "ibmapm",
     "main": "./index.js",
-    "version": "2.1.5",
+    "version": "19.6.0",
     "readme": "Node.js Data Collector",
     "description": "Node.js data collector for IBM BAM",
     "dependencies": {
-        "appmetrics": "^4.0.0",
+        "appmetrics": "^5.0.0",
         "log4js": "^0.6.38",
         "properties": "^1.2.1",
         "uuid": "^2.0.2",
@@ -28,7 +28,7 @@
         "async": "^0.9.0",
         "coveralls": "^2.11.2",
         "intercept-stdout": "~0.1.2",
-        "nyc": "^11.0.2",
+        "nyc": "^14.0.0",
         "tap": "12.x",
         "tap-junit": "2.0.0",
         "https-proxy-agent": "^2.2.1"
@@ -52,7 +52,8 @@
         "type": "git",
         "url": "git@github.com:IBM/node-ibmapm.git"
     },
-    "contributors": [{
+    "contributors": [
+        {
             "name": "Hui Jun Song",
             "email": "songhj@cn.ibm.com"
         },
