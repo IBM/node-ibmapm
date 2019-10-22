@@ -18,7 +18,7 @@
     },
     "devDependencies": {
         "chai": "^3.5.0",
-        "eslint": "^3.19.0",
+        "eslint": "^6.5.1",
         "eslint-config-strongloop": "^2.1.0",
         "should": "^9.0.0",
         "should-http": "0.0.4",
