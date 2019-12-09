@@ -351,7 +351,7 @@ function initJaegerSender() {
             process.env.JAEGER_ENDPOINT_NOTREADY = 'false';
         }
 
-        logger.debug('initJaegerSender done', zipkinUrl, process.env.JAEGER_ENDPOINT_NOTREADY);
+        logger.debug('initJaegerSender done', zipkinUrl, process.env.JAEGER_ENDPOINT_NOTREADY, enabled);
     }
 }
 
@@ -394,7 +394,7 @@ function refreshJaegerSender(){
             zipkin.enable();
             process.env.JAEGER_ENDPOINT_NOTREADY = 'false';
         }
-        logger.debug('done', zipkinUrl, process.env.JAEGER_ENDPOINT_NOTREADY);
+        logger.debug('done', zipkinUrl, process.env.JAEGER_ENDPOINT_NOTREADY, enabled);
     }
 };
 
