@@ -297,9 +297,9 @@ function initJaegerSender() {
     logger.debug('initJaegerSender');
     if (!opentracing_disabled) {
         const zipkin = require('./appmetrics-zipkin/index.js');
-        const zipkinUrl = process.env.JAEGER_ENDPOINT_ZIPKIN ?
-            process.env.JAEGER_ENDPOINT_ZIPKIN : 'http://localhost:9411/api/v1/spans';
-        var jaegerEndpoint = url.parse(zipkinUrl);
+        const zipkinUrl = process.env.JAEGER_ENDPOINT_ZIPKIN_V2 ?
+            process.env.JAEGER_ENDPOINT_ZIPKIN_V2 : process.env.JAEGER_ENDPOINT_ZIPKIN;
+        var jaegerEndpoint = url.parse(zipkinUrl || 'http://localhost:9411/api/v1/spans');
         var enabled = true;
         logger.debug('jaeger', jaegerEndpoint.hostname, jaegerEndpoint.port, opentracing_sampler);
         var zipkinOptions;
@@ -319,7 +319,7 @@ function initJaegerSender() {
                 port: jaegerEndpoint.port,
                 sampleRate: opentracing_sampler
             };
-            if (!process.env.JAEGER_ENDPOINT_ZIPKIN) {
+            if (!process.env.JAEGER_ENDPOINT_ZIPKIN && !process.env.JAEGER_ENDPOINT_ZIPKIN_V2) {
                 enabled = false;
             }
         }
@@ -360,9 +360,9 @@ function refreshJaegerSender(){
     if (!opentracing_disabled) {
         logger.debug('enter');
         const zipkin = require('./appmetrics-zipkin/index.js');
-        const zipkinUrl = process.env.JAEGER_ENDPOINT_ZIPKIN ?
-            process.env.JAEGER_ENDPOINT_ZIPKIN : 'http://localhost:9411/api/v1/spans';
-        var jaegerEndpoint = url.parse(zipkinUrl);
+        const zipkinUrl = process.env.JAEGER_ENDPOINT_ZIPKIN_V2 ?
+            process.env.JAEGER_ENDPOINT_ZIPKIN_V2 : process.env.JAEGER_ENDPOINT_ZIPKIN;
+        var jaegerEndpoint = url.parse(zipkinUrl || 'http://localhost:9411/api/v1/spans');
         var enabled = false;
         logger.debug('jaeger', jaegerEndpoint.hostname, jaegerEndpoint.port, opentracing_sampler);
         var zipkinOptions;
@@ -382,7 +382,7 @@ function refreshJaegerSender(){
                 port: jaegerEndpoint.port,
                 sampleRate: opentracing_sampler
             };
-            if (process.env.JAEGER_ENDPOINT_ZIPKIN) {
+            if (process.env.JAEGER_ENDPOINT_ZIPKIN && !process.env.JAEGER_ENDPOINT_ZIPKIN_V2) {
                 enabled = true;
             }
         }

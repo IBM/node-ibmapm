@@ -1,7 +1,7 @@
 {
     "name": "ibmapm",
     "main": "./index.js",
-    "version": "19.12.0",
+    "version": "20.3.0",
     "readme": "Node.js Data Collector",
     "description": "Node.js data collector for IBM BAM",
     "dependencies": {
@@ -14,7 +14,7 @@
         "zipkin": "0.10.1",
         "zipkin-context-cls": "0.6.1",
         "zipkin-transport-http": "0.10.1",
-        "ibmapm-restclient": "^19.12.0"
+        "ibmapm-restclient": ">=20.3.0"
     },
     "devDependencies": {
         "chai": "^3.5.0",
@@ -31,7 +31,7 @@
         "nyc": "^14.0.0",
         "tap": "12.x",
         "tap-junit": "2.0.0",
-        "https-proxy-agent": "^2.2.1"
+        "https-proxy-agent": "^2.2.4"
     },
     "scripts": {
         "pretest": "eslint .",
