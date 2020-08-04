@@ -76,10 +76,32 @@ if (loglevel &&
 logger.addContext('fileName', 'nodejs_dc');
 var commontools = require('./lib/tool/common');
 
+// Detect default LWDC UA Plugin URL exist or not
+if (typeof (process.env.UA_LWDC_LISTENER_URL) === 'undefined') {
+    logger.debug('Detect UA plugin URL');
+    var http = require('http');
+    var uaDefaultUrl = 'http://lwdc.cp4mcm-cloud-native-monitoring:8848';
+    if (!process.env.UA_LWDC_LISTENER_URL) {
+        http.get(uaDefaultUrl, (res) => {
+            logger.debug('Detect UA plugin URL, statusCode is', res.statusCode);
+            if (res.statusCode === 200) {
+                process.env.UA_LWDC_LISTENER_URL = uaDefaultUrl;
+                process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V1 = 'http://zipkin.cp4mcm-cloud-native-monitoring:9411/api/v1/spans';
+                process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V2 = 'http://zipkin.cp4mcm-cloud-native-monitoring:9411/api/v2/spans';
+                logger.info('Found default UA plugin URL: ', uaDefaultUrl);
+            }
+        }).on('error', (e) => {
+            logger.info('No default LWDC UA Plugin URL found');
+        });
+    }
+}
+
+
 //    initialize log end
 // Sometimes we need to change the name of some environment variables to consistant all of DC.
 commontools.envDecrator();
 global.DC_VERSION = getDCVersion();
+
 //    initialize different code path - BI/BAM/Agent
 var configObj;
 var opentracing_sampler = process.env['OPENTRACING_SAMPLER'] || 0.01;
@@ -150,7 +172,6 @@ if (typeof (process.env.KNJ_MIN_CLOCK_STACK) === 'undefined' &&
     configObj && configObj.KNJ_MIN_CLOCK_STACK) {
     process.env.KNJ_MIN_CLOCK_STACK = configObj.KNJ_MIN_CLOCK_STACK;
 }
-
 // if (typeof (process.env.KNJ_DISABLE_METHODTRACE) === 'undefined' &&
 //     configObj && configObj.KNJ_DISABLE_METHODTRACE) {
 //     process.env.KNJ_DISABLE_METHODTRACE = configObj.KNJ_DISABLE_METHODTRACE;
@@ -184,7 +205,7 @@ if (!loglevel &&
     var knj_loglevel = process.env.KNJ_LOG_LEVEL ? process.env.KNJ_LOG_LEVEL.toUpperCase() : undefined;
     if (knj_loglevel &&
         (knj_loglevel === 'OFF' || knj_loglevel === 'ERROR' || knj_loglevel === 'INFO' ||
-        knj_loglevel === 'DEBUG' || knj_loglevel === 'ALL')) {
+            knj_loglevel === 'DEBUG' || knj_loglevel === 'ALL')) {
         logger.setLevel(knj_loglevel);
         process.env.KNJ_LOG_LEVEL = knj_loglevel;
         logger.info('KNJ_LOG_LEVEL is set to', knj_loglevel);
@@ -296,14 +317,20 @@ function getDCVersion() {
 function initJaegerSender() {
     logger.debug('initJaegerSender');
     if (!opentracing_disabled) {
+        var uaZipkinUrl = '';
+        if (process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V2) {
+            uaZipkinUrl = process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V2;
+        } else if (process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V1) {
+            uaZipkinUrl = process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V1;
+        }
         const zipkin = require('./appmetrics-zipkin/index.js');
-        const zipkinUrl = process.env.JAEGER_ENDPOINT_ZIPKIN_V2 ?
-            process.env.JAEGER_ENDPOINT_ZIPKIN_V2 : process.env.JAEGER_ENDPOINT_ZIPKIN;
+        const zipkinUrl = uaZipkinUrl.length > 1 ? uaZipkinUrl : (process.env.JAEGER_ENDPOINT_ZIPKIN_V2 ?
+            process.env.JAEGER_ENDPOINT_ZIPKIN_V2 : process.env.JAEGER_ENDPOINT_ZIPKIN);
         var jaegerEndpoint = url.parse(zipkinUrl || 'http://localhost:9411/api/v1/spans');
         var enabled = true;
         logger.debug('jaeger', jaegerEndpoint.hostname, jaegerEndpoint.port, opentracing_sampler);
         var zipkinOptions;
-        if (jaegerEndpoint.protocol === 'https:'){
+        if (jaegerEndpoint.protocol === 'https:') {
             zipkinOptions = {
                 zipkinEndpoint: zipkinUrl,
                 sampleRate: opentracing_sampler,
@@ -315,14 +342,17 @@ function initJaegerSender() {
             }
         } else {
             zipkinOptions = {
+                zipkinEndpoint: zipkinUrl,
                 host: jaegerEndpoint.hostname,
                 port: jaegerEndpoint.port,
                 sampleRate: opentracing_sampler
             };
-            if (!process.env.JAEGER_ENDPOINT_ZIPKIN && !process.env.JAEGER_ENDPOINT_ZIPKIN_V2) {
+            if (!process.env.JAEGER_ENDPOINT_ZIPKIN && !process.env.JAEGER_ENDPOINT_ZIPKIN_V2
+                && !process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V2 && !process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V1) {
                 enabled = false;
             }
         }
+
         zipkin(zipkinOptions);
         var internalUrls = [
             '/applicationmgmt/0.9',
@@ -336,14 +366,17 @@ function initJaegerSender() {
             '/1.0/monitoring/data',
             '/OEReceiver/v1/monitoringdata/',
             '/api/v1/spans',
+            '/api/v2/spans',
             '/api/v1/namespaces',
-            '/apis/extensions/v1beta1/namespaces'
+            '/api/v1/nodes',
+            '/apis/extensions/v1beta1/namespaces',
+            '/k8s'
         ];
         zipkin.updatePathFilter(internalUrls);
         zipkin.updateHeaderFilter({
             'User-Agent': 'NodeDC'
         });
-        if (!enabled){
+        if (!enabled) {
             zipkin.disable();
             process.env.JAEGER_ENDPOINT_NOTREADY = 'true';
         } else {
@@ -355,18 +388,24 @@ function initJaegerSender() {
     }
 }
 
-function refreshJaegerSender(){
+function refreshJaegerSender() {
     logger.debug('refreshJaegerSender enter');
     if (!opentracing_disabled) {
+        var uaZipkinUrl = '';
+        if (process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V2) {
+            uaZipkinUrl = process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V2;
+        } else if (process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V1) {
+            uaZipkinUrl = process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V1;
+        }
         logger.debug('enter');
         const zipkin = require('./appmetrics-zipkin/index.js');
-        const zipkinUrl = process.env.JAEGER_ENDPOINT_ZIPKIN_V2 ?
-            process.env.JAEGER_ENDPOINT_ZIPKIN_V2 : process.env.JAEGER_ENDPOINT_ZIPKIN;
+        const zipkinUrl = uaZipkinUrl.length > 1 ? uaZipkinUrl : (process.env.JAEGER_ENDPOINT_ZIPKIN_V2 ?
+            process.env.JAEGER_ENDPOINT_ZIPKIN_V2 : process.env.JAEGER_ENDPOINT_ZIPKIN);
         var jaegerEndpoint = url.parse(zipkinUrl || 'http://localhost:9411/api/v1/spans');
         var enabled = false;
         logger.debug('jaeger', jaegerEndpoint.hostname, jaegerEndpoint.port, opentracing_sampler);
         var zipkinOptions;
-        if (jaegerEndpoint.protocol === 'https:'){
+        if (jaegerEndpoint.protocol === 'https:') {
             zipkinOptions = {
                 zipkinEndpoint: zipkinUrl,
                 sampleRate: opentracing_sampler,
@@ -378,16 +417,20 @@ function refreshJaegerSender(){
             }
         } else {
             zipkinOptions = {
+                zipkinEndpoint: zipkinUrl,
                 host: jaegerEndpoint.hostname,
                 port: jaegerEndpoint.port,
                 sampleRate: opentracing_sampler
             };
-            if (process.env.JAEGER_ENDPOINT_ZIPKIN && !process.env.JAEGER_ENDPOINT_ZIPKIN_V2) {
+            if (process.env.JAEGER_ENDPOINT_ZIPKIN || process.env.JAEGER_ENDPOINT_ZIPKIN_V2) {
+                enabled = true;
+            }
+            if (process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V1 || process.env.UA_JAEGER_ENDPOINT_ZIPKIN_V2) {
                 enabled = true;
             }
         }
         zipkin.update(zipkinOptions);
-        if (!enabled){
+        if (!enabled) {
             zipkin.disable();
             process.env.JAEGER_ENDPOINT_NOTREADY = 'true';
         } else {
